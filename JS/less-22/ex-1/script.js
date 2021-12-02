@@ -3,13 +3,15 @@
 const button = document.querySelector("button");
 const form = document.createElement("form");
 const submit = document.createElement("input");
+let focusInValue;
+let focusOutValue;
 
 const setTr = (post) => {
   const tr = document.createElement("tr");
-  Object.values(post).forEach((item) => {
+  Object.values(post).forEach((item, index) => {
     tr.insertAdjacentHTML(
       "beforeend",
-      `<td><textarea name="form-elem">${item}</textarea></td>`
+      `<td><textarea name="form-elem-${index}">${item}</textarea></td>`
     );
   });
   return tr;
@@ -17,17 +19,16 @@ const setTr = (post) => {
 
 const insertTable = (posts) => {
   const table = document.createElement("table");
-
   form.setAttribute("class", "form");
-
   submit.setAttribute("type", "submit");
   submit.setAttribute("class", "button");
+  submit.setAttribute("disabled", true);
   const tr = document.createElement("tr");
 
-  Object.keys(posts[0]).forEach((item) => {
+  Object.keys(posts[0]).forEach((item, index) => {
     tr.insertAdjacentHTML(
       "beforeend",
-      `<th><textarea name="form-elem">${item}</textarea></th>`
+      `<th><textarea name='form-elem-${index}'>${item}</textarea></th>`
     );
   });
   table.append(tr);
@@ -50,6 +51,7 @@ const getTableData = (e) => {
       .then((result) => {
         setLoading();
         insertTable(result);
+        focusInValue = result;
         button.innerHTML = "Данные загружены";
         button.setAttribute("disabled", true);
       });
@@ -77,20 +79,11 @@ const removeText = () => {
 const onSubmit = async (e) => {
   e.preventDefault();
   try {
-    const tableForm = document.querySelector("form");
     const submitInput = document.querySelector("input");
-    const formData = new FormData(tableForm);
-    const formDataAll = Array.from(formData.entries()).reduce(
-      (prev, [name, value]) => ({
-        ...prev,
-        [name]: value,
-      }),
-      {}
-    );
-    const formDataJson = JSON.stringify(formDataAll);
+    const tableForm = document.querySelector("form");
     const response = await fetch(`https://httpbin.org/post`, {
       method: "POST",
-      body: formDataJson,
+      body: new FormData(tableForm),
     });
     const result = await response.json();
     console.log(result);
@@ -107,3 +100,21 @@ button.addEventListener("click", () => {
 });
 
 form.addEventListener("submit", onSubmit);
+
+const onChange = (e) => {
+  e.preventDefault();
+  submit.removeAttribute("disabled", true);
+};
+
+// const onChange = (e) => {
+//   e.preventDefault();
+//   const tableForm = document.querySelector("form");
+//   focusOutValue = new FormData(tableForm);
+//   console.log(focusInValue, `focus IN`);
+//   console.log(focusOutValue, `focus OUT`);
+//   if (focusInValue != focusOutValue) {
+//     submit.removeAttribute("disabled", true);
+//   }
+// };
+
+form.addEventListener("change", onChange);
